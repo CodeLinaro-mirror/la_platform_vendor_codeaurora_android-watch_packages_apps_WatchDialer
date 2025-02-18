@@ -144,7 +144,7 @@ EXTRA_PACKAGE_FLAGS = [
 ]
 
 filegroup {
-    name: "qti_dialer_manifests",
+    name: "watch_dialer_manifests",
     srcs: ["**/AndroidManifest.xml"],
     exclude_srcs: [
         "java/com/android/dialer/binary/aosp/testing/AndroidManifest.xml",
@@ -245,7 +245,7 @@ RES_DIRS = [
 ]
 
 android_app {
-    name: "QtiDialer",
+    name: "WatchDialer",
     use_resource_processor: false,
     srcs: [
         "java/com/android/**/*.java",
@@ -281,7 +281,7 @@ android_app {
         // b/62875795
         "java/com/android/voicemail/impl/com/google/internal/communications/voicemailtranscription/v1/VoicemailTranscriptionServiceGrpc.java",
     ],
-    additional_manifests: [":qti_dialer_manifests"],
+    additional_manifests: [":watch_dialer_manifests"],
     aidl: {
         local_include_dirs: ["java"],
     },
@@ -326,9 +326,9 @@ android_app {
         "auto_value_plugin",
         "dialer-dagger2-compiler",
         "dialer-glide-annotation-processor",
-        "qti_dialer_rootcomponentprocessor_plugin",
+        "watch_dialer_rootcomponentprocessor_plugin",
     ],
-    // Forcibly uses the same jdk version used in qti-dialer-rootcomponentprocessor.
+    // Forcibly uses the same jdk version used in watch-dialer-rootcomponentprocessor.
     java_version: "1.8",
     optimize: {
         proguard_flags_files: ["**/proguard.flags"],
@@ -342,10 +342,12 @@ android_app {
     privileged: true,
     system_ext_specific: true,
     uses_libs: ["org.apache.http.legacy"],
+
+    overrides: ["QtiDialer"],
 }
 
 java_library_host {
-    name: "qti-dialer-rootcomponentprocessor",
+    name: "watch-dialer-rootcomponentprocessor",
     srcs: [
         "java/com/android/dialer/rootcomponentgenerator/**/*.java",
         "java/com/android/dialer/inject/DialerRootComponent.java",
@@ -366,8 +368,8 @@ java_library_host {
 }
 
 java_plugin {
-    name: "qti_dialer_rootcomponentprocessor_plugin",
-    static_libs: ["qti-dialer-rootcomponentprocessor"],
+    name: "watch_dialer_rootcomponentprocessor_plugin",
+    static_libs: ["watch-dialer-rootcomponentprocessor"],
     processor_class: "com.android.dialer.rootcomponentgenerator.RootComponentProcessor",
     visibility: ["//vendor/codeaurora/commonsys/packages/apps/Dialer"],
 }
