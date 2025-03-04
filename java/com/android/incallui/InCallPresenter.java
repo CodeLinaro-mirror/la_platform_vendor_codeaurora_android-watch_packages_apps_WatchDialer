@@ -15,7 +15,7 @@
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2021, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -116,7 +116,6 @@ import com.android.incallui.videosurface.bindings.VideoSurfaceBindings;
 import com.android.incallui.videosurface.protocol.VideoSurfaceTexture;
 import com.android.incallui.videotech.utils.VideoUtils;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -124,6 +123,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Executor;
 
 import org.codeaurora.ims.CrsCrbtManager;
 import org.codeaurora.ims.CrsCrbtListenerBase;
@@ -178,6 +178,8 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
   private ExternalCallNotifier externalCallNotifier;
   private ContactInfoCache contactInfoCache;
   private Context context;
+  private Executor mExecutor;
+  private CrsCrbtListenerBase mCrsDataUpdateListener;
   private final OnCheckBlockedListener onCheckBlockedListener =
       new OnCheckBlockedListener() {
         @Override
@@ -285,7 +287,6 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
   private DialerCall mCrsCrbtCall = null;
   private int mCacheSipDtmfBitMask = SipDtmfUtil.SIP_DTMF_TYPE_INVALID;
   private DialerCall mPrimary = null;
-  private DialerCall mSecondary = null;
 
   /** Inaccessible constructor. Must use getRunningInstance() to get this singleton. */
   @VisibleForTesting
@@ -365,6 +366,33 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
 
     Objects.requireNonNull(context);
     this.context = context;
+    // Use newCachedThreadPool() in the unlikely event that the context is null.
+    mExecutor = context.getMainExecutor();
+    mCrsDataUpdateListener = new CrsCrbtListenerBase(mExecutor) {
+      @Override
+      public void onCrsDataUpdated(int phoneId, int crsType, boolean isPreparatory) {
+          LogUtil.i("InCallPresenter.onCrsDataUpdated", "crs type: "
+                  + crsType + " isPreparatory:: " + isPreparatory );
+          if (!isPreparatory && mIsPreparatoryMode && mCrsCrbtCall!= null) {
+            onIncomingCall(mCrsCrbtCall);
+            mIsPreparatoryMode = false;
+          }
+      }
+
+      @Override
+      public void onSipDtmfReceived(int phoneId, String config) {
+          LogUtil.i("InCallPresenter.onSipDtmfReceived", "phoneId : %s, sipDtmfConfig : %s ",
+                  phoneId, config);
+          //cache this bitMap due to sometimes SIP DTMF come early and UI is not shown,
+          //will use this cache value to update buttons for MT call CRS and MO CRBT call.
+          mCacheSipDtmfBitMask = SipDtmfUtil.toButtonBitmask(config);
+          for (InCallEventListener listener : inCallEventListeners) {
+            mHandler.post(()->listener.onSipDtmfChanged(mCacheSipDtmfBitMask));
+          }
+       }
+    };
+
+
     BottomSheetHelper.getInstance().setUp(context);
     this.contactInfoCache = contactInfoCache;
 
@@ -373,7 +401,6 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
     addListener(this.statusBarNotifier);
     addIncomingCallListener(this.statusBarNotifier);
     addInCallEventListener(this.statusBarNotifier);
-    addOrientationListener(this.statusBarNotifier);
     EnrichedCallComponent.get(this.context)
         .getEnrichedCallManager()
         .registerStateChangedListener(this.statusBarNotifier);
@@ -514,32 +541,6 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
         LogUtil.e("InCallPresenter.removeCrsCrbtListener", "exception " + e);
     }
   }
-
-  private CrsCrbtListenerBase mCrsDataUpdateListener =
-      new CrsCrbtListenerBase() {
-      @Override
-      public void onCrsDataUpdated(int phoneId, int crsType, boolean isPreparatory) {
-          LogUtil.i("InCallPresenter.onCrsDataUpdated", "crs type: "
-                  + crsType + " isPreparatory:: " + isPreparatory );
-          if (!isPreparatory && mIsPreparatoryMode && mCrsCrbtCall!= null) {
-            onIncomingCall(mCrsCrbtCall);
-            mIsPreparatoryMode = false;
-          }
-      }
-
-      @Override
-      public void onSipDtmfReceived(int phoneId, String config) {
-          LogUtil.i("InCallPresenter.onSipDtmfReceived", "phoneId : %s, sipDtmfConfig : %s ",
-                  phoneId, config);
-          //cache this bitMap due to sometimes SIP DTMF come early and UI is not shown,
-          //will use this cache value to update buttons for MT call CRS and MO CRBT call.
-          mCacheSipDtmfBitMask = SipDtmfUtil.toButtonBitmask(config);
-          for (InCallEventListener listener : inCallEventListeners) {
-            mHandler.post(()->listener.onSipDtmfChanged(mCacheSipDtmfBitMask));
-          }
-      }
-  };
-
   /**
    * Send SIP DTMF to modem/network when user clicks the icons in CRS/CRBT UI.
    */
@@ -583,24 +584,6 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
   public int getSipDtmfBitMask() {
     return mCacheSipDtmfBitMask;
   }
-
-  public void showNextSecondaryCallClicked() {
-    LogUtil.d("InCallPresenter.showNextSecondaryCallClicked", "");
-    ArrayList<DialerCall> backgroundCalls = CallList.getInstance().getBackgroundCalls(mPrimary);
-    if (backgroundCalls.isEmpty() || mSecondary == null) {
-      // No backgroundCalls calls or secondary call is null.
-      return;
-    }
-    int totalBackgroundCalls = backgroundCalls.size();
-    int visibleSecondaryCallIndex = backgroundCalls.indexOf(mSecondary);
-    int nextSecondaryCallIndex = (visibleSecondaryCallIndex + 1) % totalBackgroundCalls;
-    mSecondary = backgroundCalls.get(nextSecondaryCallIndex);
-
-    for (InCallEventListener listener : inCallEventListeners) {
-        listener.onShowNextSecondaryCall(mSecondary);
-    }
-  }
-
   /**
    * Return whether we should start call in bubble mode and not show InCallActivity. The call mode
    * should be set in CallConfiguration in EXTRA_OUTGOING_CALL_EXTRAS when starting a call intent.
@@ -1080,7 +1063,6 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
 
     // Foreground call changed
     DialerCall primary = null;
-    DialerCall secondary = null;
     if (newState == InCallState.INCOMING) {
       primary = callList.getIncomingCall();
     } else if (newState == InCallState.PENDING_OUTGOING || newState == InCallState.OUTGOING) {
@@ -1088,13 +1070,10 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
       if (primary == null) {
         primary = callList.getPendingOutgoingCall();
       }
-      secondary = getCallToDisplay(callList, null, true);
     } else if (newState == InCallState.INCALL) {
       primary = getCallToDisplay(callList, null, false);
-      secondary = getCallToDisplay(callList, primary, true);
     }
     mPrimary = primary;
-    mSecondary = secondary;
 
     if (primary != null) {
       onForegroundCallChanged(primary);
@@ -1149,24 +1128,6 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
     retval = callList.getSecondActiveCall();
     if (retval != null && retval != ignore) {
       return retval;
-    }
-
-    // If we have multiple held calls and only held calls, the call in
-    // foreground will be the last call which went into held state.
-    if (ignore == null && callList.getBackgroundCalls().size() > 1) {
-      retval = callList.getLastHeldCall();
-      if (retval != null) {
-        return retval;
-      }
-    }
-
-    // If we have multiple held calls we will continue displaying the
-    // previous held call in banner.
-    if(ignore != null && callList.getBackgroundCalls().size() > 1) {
-      retval = inCallPresenter.mSecondary;
-      if (retval != null && retval != ignore && retval.getState() == DialerCallState.ONHOLD) {
-        return retval;
-      }
     }
 
     // Disconnected calls get primary position if there are no active calls
@@ -1227,7 +1188,6 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
     InCallState newState = startOrFinishUi(InCallState.INCOMING);
     InCallState oldState = inCallState;
 
-    onForegroundCallChanged(call);
     LogUtil.i(
         "InCallPresenter.onIncomingCall", "Phone switching state: " + oldState + " -> " + newState);
     inCallState = newState;
@@ -2069,7 +2029,6 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
         removeListener(statusBarNotifier);
         removeIncomingCallListener(statusBarNotifier);
         removeInCallEventListener(statusBarNotifier);
-        removeOrientationListener(statusBarNotifier);
         EnrichedCallComponent.get(context)
             .getEnrichedCallManager()
             .unregisterStateChangedListener(statusBarNotifier);
@@ -2413,7 +2372,6 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
    * UI. Used as a means of communicating between fragments that make up the UI.
    */
   public interface InCallEventListener {
-    default void onShowNextSecondaryCall(DialerCall nextSecondaryCall) {}
     default void onSessionModificationStateChange(DialerCall call) {}
     default void onFullscreenModeChanged(boolean isFullscreenMode) {}
     default void onHideMeUiModeChanged() {}
@@ -2524,13 +2482,4 @@ public class InCallPresenter implements CallList.Listener, AudioModeProvider.Aud
   }
 
   private final Set<InCallUiLock> inCallUiLocks = new ArraySet<>();
-
-  public StatusBarNotifier getStatusBarNotifier() {
-    return statusBarNotifier;
-  }
-
-  /** Gets the secondary call. */
-  public DialerCall getSecondaryCall() {
-    return mSecondary;
-  }
 }

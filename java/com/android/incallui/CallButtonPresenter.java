@@ -14,7 +14,7 @@
  * limitations under the License
  *
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -137,7 +137,6 @@ public class CallButtonPresenter
       call = callList.getOutgoingCall();
     } else if (newState == InCallState.INCALL) {
       call = callList.getActiveOrBackgroundCall();
-      LogUtil.v("CallButtonPresenter.onStateChange", "lastPrimary call: " + call);
 
       // When connected to voice mail, automatically shows the dialpad.
       // (On previous releases we showed it when in-call shows up, before waiting for
@@ -546,12 +545,38 @@ public class CallButtonPresenter
   }
 
   private boolean shouldEnableSwapToSecondaryButton(DialerCall call) {
-    if (call != null && !call.isSwapDisabled() && !call.isEmergencyCall() &&
+    if (call != null && !call.isEmergencyCall() &&
             (call.getState() == DialerCallState.ACTIVE ||
              call.getState() == DialerCallState.ONHOLD)) {
         return true;
     }
     return false;
+  }
+
+  /** Helper function to determine whether swap button should be shown
+   *  Only in DSDS transition mode, show the swap button if
+   *  calls are across sub.
+   */
+  private boolean shouldShowSwitchtoSecondaryCall() {
+    DialerCall call = CallList.getInstance().getActiveCall();
+    DialerCall secondaryCall = CallList.getInstance().getBackgroundCall();
+
+    if (call == null || secondaryCall == null) {
+      return false;
+    }
+
+    if (telephonyManager.isDsdsTransitionSupported()) {
+        return true;
+    }
+    // if UE is in DSDS but the calls are on different phone accounts
+    // don't allow swap if dsds transition mode is not supported
+    // If there is an HFP call, Dialer treats this like a different
+    // phone account and this leads to the swap button being disabled.
+    // So by checking if either call is an HFP call, we can enable swap
+    // between any combination of HFP call and normal cellular call.
+    return call.hasSamePhoneAccount(secondaryCall)
+            || DialerUtils.isHfpPhoneAccount(context, secondaryCall.getAccountHandle())
+            || DialerUtils.isHfpPhoneAccount(context, call.getAccountHandle());
   }
 
   /**
@@ -574,7 +599,7 @@ public class CallButtonPresenter
             && !call.hasSentVideoUpgradeRequest()
             && call.can(android.telecom.Call.Details.CAPABILITY_SUPPORT_HOLD)
             && call.can(android.telecom.Call.Details.CAPABILITY_HOLD)
-            && !shouldRemoveHoldButtonForHfpCall(call);
+            && !shouldRemoveHoldButtonForHfpCall();
     final boolean isCallOnHold = call.getState() == DialerCallState.ONHOLD;
 
     final boolean showAddCall =
@@ -590,7 +615,7 @@ public class CallButtonPresenter
                 .noneMatch(c -> c != null && c.isSpeakEasyCall())
             && call.can(android.telecom.Call.Details.CAPABILITY_MERGE_CONFERENCE)
             && !call.hasSentVideoUpgradeRequest()
-            && call.hasSamePhoneAccount(InCallPresenter.getInstance().getSecondaryCall());
+            && call.hasSamePhoneAccount(CallList.getInstance().getBackgroundCall());
 
     final boolean isRttMergeSupported = QtiImsExtUtils.isRttMergeSupported(
                                           BottomSheetHelper.getInstance().getPhoneId(),
@@ -654,8 +679,7 @@ public class CallButtonPresenter
                                                      : showMerge);
     inCallButtonUi.showButton(InCallButtonIds.BUTTON_DOWNGRADE_TO_VOICE, showDowngradeRtt);
 
-    boolean showSwitchToSecondary = canSwitchToSecondaryCall(call,
-        InCallPresenter.getInstance().getSecondaryCall())
+    boolean showSwitchToSecondary = shouldShowSwitchtoSecondaryCall()
         && !call.hasSentVideoUpgradeRequest();
     boolean enableSwitchToSecondary = showSwitchToSecondary
         && shouldEnableSwapToSecondaryButton(call);
@@ -674,29 +698,6 @@ public class CallButtonPresenter
       BottomSheetHelper.getInstance().updateMap();
     }
     inCallButtonUi.updateButtonStates();
-  }
-
-  /** Helper function to determine whether swap button should be shown
-   *  Only in DSDA or DSDS transition mode, show the swap button if
-   *  calls are across sub.
-   */
-  private boolean canSwitchToSecondaryCall(DialerCall call, DialerCall secondaryCall) {
-    if (call == null || secondaryCall == null) {
-      return false;
-    }
-
-    if (telephonyManager.isDsdaOrDsdsTransitionMode()) {
-        return true;
-    }
-    // if UE is in DSDS but the calls are on different phone accounts
-    // don't allow swap if dsds transition mode is not supported
-    // If there is an HFP call, Dialer treats this like a different
-    // phone account and this leads to the swap button being disabled.
-    // So by checking if either call is an HFP call, we can enable swap
-    // between any combination of HFP call and normal cellular call.
-    return call.hasSamePhoneAccount(secondaryCall)
-            || DialerUtils.isHfpPhoneAccount(context, secondaryCall.getAccountHandle())
-            || DialerUtils.isHfpPhoneAccount(context, call.getAccountHandle());
   }
 
   private boolean hasVideoCallCapabilities(DialerCall call) {
@@ -720,11 +721,12 @@ public class CallButtonPresenter
    * Determine if the hold button should be removed from the dialer UI by first
    * checking that we have 2 calls and then checking if either of them are HFP calls.
    *
-   * @param call The primary call
    * @return True if either the primary or secondary call is an HFP call
    */
-  private boolean shouldRemoveHoldButtonForHfpCall(DialerCall call) {
-    DialerCall secondary = InCallPresenter.getInstance().getSecondaryCall();
+  private boolean shouldRemoveHoldButtonForHfpCall() {
+    DialerCall call = CallList.getInstance().getActiveCall();
+    DialerCall secondary = CallList.getInstance().getBackgroundCall();
+
     if (call == null || secondary == null) {
         return false;
     }
@@ -759,13 +761,6 @@ public class CallButtonPresenter
       if (inCallButtonUi != null && call != null) {
         updateSipDtmfButtons(sipDtmfbitMap);
       }
-  }
-
-  @Override
-  public void onShowNextSecondaryCall(DialerCall nextSecondaryCall) {
-    if (inCallButtonUi != null && call != null) {
-      updateButtonsState(call);
-    }
   }
 
   private void updateSipDtmfButtons(int sipDtmfbitMap) {

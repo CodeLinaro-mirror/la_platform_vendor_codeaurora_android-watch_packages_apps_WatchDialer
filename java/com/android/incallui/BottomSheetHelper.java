@@ -26,7 +26,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -63,6 +63,7 @@ import com.android.incallui.videotech.utils.SessionModificationState;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.List;
 import java.util.Objects;
 
@@ -80,6 +81,7 @@ public class BottomSheetHelper implements PrimaryCallTracker.PrimaryCallChangeLi
    private ExtBottomSheetFragment moreOptionsSheet;
    private boolean mIsHideMe = false;
    private Context mContext;
+   private Executor mExecutor;
    private DialerCall mCall;
    private String[][] mMoreOptions;
    private PrimaryCallTracker mPrimaryCallTracker;
@@ -93,19 +95,7 @@ public class BottomSheetHelper implements PrimaryCallTracker.PrimaryCallChangeLi
    private static final int BLIND_TRANSFER = 0;
    private static final int ASSURED_TRANSFER = 1;
    private static final int CONSULTATIVE_TRANSFER = 2;
-
-   private QtiImsExtListenerBaseImpl imsInterfaceListener =
-      new QtiImsExtListenerBaseImpl() {
-
-     /* Handles cancel call modify response */
-     @Override
-     public void receiveCancelModifyCallResponse(int phoneId, int result) {
-          LogUtil.w("BottomSheetHelper.receiveCancelModifyCallResponse", "result: " + result);
-          mHasSentCancelUpgradeRequest = false;
-          maybeUpdateCancelModifyCallInMap();
-     }
-   };
-
+   private QtiImsExtListenerBaseImpl mImsInterfaceListener;
    private AlertDialog modifyCallDialog;
    private static final int INVALID_INDEX = -1;
 
@@ -142,6 +132,17 @@ public class BottomSheetHelper implements PrimaryCallTracker.PrimaryCallChangeLi
    public void setUp(Context context) {
      LogUtil.d("BottomSheetHelper","setUp");
      mContext = context;
+     mExecutor = context.getMainExecutor();
+     mImsInterfaceListener = new QtiImsExtListenerBaseImpl(mExecutor) {
+       /* Handles cancel call modify response */
+       @Override
+       public void receiveCancelModifyCallResponse(int phoneId, int result) {
+            LogUtil.d("BottomSheetHelper.receiveCancelModifyCallResponse", "result: " + result);
+            mHasSentCancelUpgradeRequest = false;
+            maybeUpdateCancelModifyCallInMap();
+       }
+     };
+
      createQtiImsExtConnector(context);
      mQtiImsExtConnector.connect();
      mResources = context.getResources();
@@ -496,11 +497,6 @@ public class BottomSheetHelper implements PrimaryCallTracker.PrimaryCallChangeLi
     }
 
     @Override
-    public void onShowNextSecondaryCall(DialerCall nextSecondaryCall) {
-      //No-op
-    }
-
-    @Override
     public void onPrimaryCallChanged(DialerCall call) {
       LogUtil.d("BottomSheetHelper.onPrimaryCallChanged", "");
       dismissBottomSheet();
@@ -622,7 +618,7 @@ public class BottomSheetHelper implements PrimaryCallTracker.PrimaryCallChangeLi
     * Returns true if active and secondary banner call are on the same sub, false otherwise.
     */
    private static boolean isConsultativeTransferOnSameSub() {
-     DialerCall secondaryCall = InCallPresenter.getInstance().getSecondaryCall();
+     DialerCall secondaryCall = CallList.getInstance().getBackgroundCall();
      DialerCall foregroundCall = CallList.getInstance().getActiveCall();
      return secondaryCall != null && foregroundCall != null &&
          Objects.equals(secondaryCall.getAccountHandle(), foregroundCall.getAccountHandle());
@@ -676,7 +672,7 @@ public class BottomSheetHelper implements PrimaryCallTracker.PrimaryCallChangeLi
        return;
      }
      //For Consultative transfer number is not needed
-     DialerCall backgroundCall = InCallPresenter.getInstance().getSecondaryCall();
+     DialerCall backgroundCall = CallList.getInstance().getBackgroundCall();
      if (backgroundCall == null ||
          !Objects.equals(backgroundCall.getAccountHandle(), mCall.getAccountHandle())) {
        LogUtil.w("BottomSheetHelper.transferCallConsultative", "backgroundCall is null" +
@@ -800,7 +796,7 @@ public class BottomSheetHelper implements PrimaryCallTracker.PrimaryCallChangeLi
      }
 
      if (mCall.answeringDisconnectsOtherCall()) {
-       AnswerUtils.disconnectAllAndAnswer(videoState, mContext);
+       AnswerUtils.disconnectAllAndAnswer(videoState);
        return;
      }
 
@@ -839,14 +835,16 @@ public class BottomSheetHelper implements PrimaryCallTracker.PrimaryCallChangeLi
       }
 
       if (isVideoEnabled && QtiCallUtils.hasReceiveVideoCapabilities(mCall)
-                  && !QtiCallUtils.isVideoRxOnly(mCall)) {
+          && !QtiCallUtils.isVideoRxOnly(mCall)
+          && !QtiCallUtils.hasVisualizedVoiceAttribute(mCall)) {
         items.add(mResources.getText(R.string.modify_call_option_vt_rx));
         itemToCallType.add(VideoProfile.STATE_RX_ENABLED);
       }
 
       if (isVideoEnabled && QtiCallUtils.hasTransmitVideoCapabilities(mCall)
           && (!QtiCallUtils.isVideoTxOnly(mCall)
-          || ScreenShareHelper.screenShareRequested())) {
+          || ScreenShareHelper.screenShareRequested())
+          && !QtiCallUtils.hasVisualizedVoiceAttribute(mCall)) {
         items.add(mResources.getText(R.string.modify_call_option_vt_tx));
         itemToCallType.add(VideoProfile.STATE_TX_ENABLED);
       }
@@ -963,7 +961,7 @@ public class BottomSheetHelper implements PrimaryCallTracker.PrimaryCallChangeLi
       try {
         LogUtil.d("BottomSheetHelper.cancelUpgradeClicked",
             "Sending cancel upgrade request with Phone id " + getPhoneId());
-        mQtiImsExtManager.sendCancelModifyCall(getPhoneId(),imsInterfaceListener);
+        mQtiImsExtManager.sendCancelModifyCall(getPhoneId(), mImsInterfaceListener);
         mHasSentCancelUpgradeRequest = true;
         maybeUpdateCancelModifyCallInMap();
       } catch (QtiImsException e) {

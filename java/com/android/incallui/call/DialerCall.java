@@ -750,7 +750,8 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
     final int oldState = getState();
     final int translatedState = translateState(telecomCall.getState());
     if (!isVideoCall) {
-      isVideoCall = isVideoCall() && !QtiCallUtils.hasVideoCrbtVoLteCall(context, this);
+      isVideoCall = isVideoCall() && !QtiCallUtils.hasVideoCrbtVoLteCall(context, this)
+          && !QtiCallUtils.isVisualizedVoiceCall(this);
     }
     if (!overwriteDisconnectCause) {
       overwriteDisconnectCause = (DialerCallState.isDialing(oldState)
@@ -1458,17 +1459,6 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
       return false;
     }
     return extras.getBoolean(CallCompat.Details.EXTRA_ANSWERING_DROPS_FOREGROUND_CALL);
-  }
-
-  /**
-   * Determines if swap across calls is disabled.
-    *
-   * @return {@code true} if swap option is disabled, {@code false} otherwise.
-   */
-  public boolean isSwapDisabled() {
-    Bundle extras = getExtras();
-    return extras != null &&
-        extras.getBoolean("android.telecom.extra.DISABLE_SWAP_CALL", false);
   }
 
   private void parseCallSpecificAppData() {
