@@ -12,6 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * // QTI_BEGIN: 2025-07-22 Removed support for CALL_CONTACT shortcut on Watch devices
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ * // QTI_END: 2025-07-22 Removed support for CALL_CONTACT shortcut on Watch devices
  */
 
 package com.android.dialer.shortcuts;
@@ -24,6 +30,9 @@ import android.os.Build.VERSION_CODES;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import com.android.dialer.common.Assert;
+// QTI_BEGIN: 2025-07-22 Removed support for CALL_CONTACT shortcut on Watch devices
+import com.android.incallui.SystemFeatures;
+// QTI_END: 2025-07-22 Removed support for CALL_CONTACT shortcut on Watch devices
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +72,14 @@ final class ShortcutInfoFactory {
       Intent intent = new Intent();
       intent.setClassName(context, "com.android.dialer.shortcuts.CallContactActivity");
       intent.setData(shortcut.getLookupUri());
-      intent.setAction("com.android.dialer.shortcuts.CALL_CONTACT");
+
+      // QTI_BEGIN: 2025-07-22 Removed support for CALL_CONTACT shortcut on Watch devices
+      boolean isWatch = SystemFeatures.getInstance().isFeatureWatchEnabled();
+      if (!isWatch) {
+        intent.setAction("com.android.dialer.shortcuts.CALL_CONTACT");
+      }
+      // QTI_END: 2025-07-22 Removed support for CALL_CONTACT shortcut on Watch devices
+
       intent.putExtra(EXTRA_CONTACT_ID, shortcut.getContactId());
 
       ShortcutInfo.Builder shortcutInfo =

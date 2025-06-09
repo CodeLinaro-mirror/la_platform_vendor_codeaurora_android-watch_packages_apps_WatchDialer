@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+    SPDX-License-Identifier: BSD-3-Clause-Clear
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.android.dialer.watch">
+
+    <application>
+        <activity
+            android:name="com.android.dialer.watch.WatchDialerActivity"
+            android:clearTaskOnLaunch="true"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="@string/app_activity"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:theme="@style/QtiMainActivityTheme">
+
+            <intent-filter>
+                <action android:name="com.android.dialer.watch.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.android.keyguard.layout"
+                android:resource="@layout/keyguard_preview" />
+
+        </activity>
+
+        <!-- New WatchRecents Activity -->
+        <activity
+            android:name="com.android.dialer.watch.WatchRecentsActivity"
+            android:exported="true"
+            android:label="@string/recents"
+            android:theme="@style/QtiMainActivityTheme">
+
+            <intent-filter>
+                <action android:name="com.android.phone.action.RECENT_CALLS" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.TAB" />
+            </intent-filter>
+
+        </activity>
+
+        <!-- New WatchCallDetails Activity -->
+        <activity
+            android:name="com.android.dialer.watch.WatchCallDetailsActivity"
+            android:exported="true"
+            android:label="@string/call_details"
+            android:theme="@style/QtiMainActivityTheme" >
+        </activity>
+
+        <!-- New WatchDialpad Activity -->
+        <activity
+            android:name="com.android.dialer.watch.WatchDialpadActivity"
+            android:exported="true"
+            android:label="@string/dialpad"
+            android:theme="@style/QtiMainActivityTheme">
+
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:mimeType="vnd.android.cursor.item/phone" />
+                <data android:mimeType="vnd.android.cursor.item/person" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="voicemail" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.DIAL" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="tel" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:mimeType="vnd.android.cursor.dir/calls" />
+            </intent-filter>
+
+            <!-- This was never intended to be public, but is here for backward
+                compatibility.  Use Intent.ACTION_DIAL instead. -->
+            <intent-filter>
+                <action android:name="com.android.phone.action.TOUCH_DIALER" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.TAB" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.CALL_BUTTON" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+
+        </activity>
+
+    </application>
+</manifest>

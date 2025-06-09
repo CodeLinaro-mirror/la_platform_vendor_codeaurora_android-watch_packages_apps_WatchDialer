@@ -154,6 +154,11 @@ filegroup {
     ],
 }
 
+filegroup {
+    name: "round_watch_dialer_manifests",
+    srcs: ["java/com/android/dialer/watch/AndroidManifest.xml"]
+}
+
 // Subtraction(RES_DIRS - EXCLUDE_RESOURCE_DIRECTORIES).
 RES_DIRS = [
     "assets/product/res",
@@ -242,6 +247,7 @@ RES_DIRS = [
     "java/com/android/incallui/video/protocol/res",
     "java/com/android/voicemail/impl/configui/res",
     "java/com/android/voicemail/impl/res",
+    "java/com/android/dialer/watch/res"
 ]
 
 android_app {
@@ -281,7 +287,7 @@ android_app {
         // b/62875795
         "java/com/android/voicemail/impl/com/google/internal/communications/voicemailtranscription/v1/VoicemailTranscriptionServiceGrpc.java",
     ],
-    additional_manifests: [":watch_dialer_manifests"],
+    additional_manifests: [":watch_dialer_manifests",":round_watch_dialer_manifests"],
     aidl: {
         local_include_dirs: ["java"],
     },
@@ -312,6 +318,7 @@ android_app {
         "libphonenumber",
         "volley",
         "zxing-core-1.7",
+        "androidx.qti.wear",
     ] + select(soong_config_variable("qtidialer", "enable_fwk_dependency"), {
         true: [
             "dialer-common-m2-target-deps",

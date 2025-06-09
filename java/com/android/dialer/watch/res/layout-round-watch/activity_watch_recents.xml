@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+    SPDX-License-Identifier: BSD-3-Clause-Clear
+-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/recents_fragment_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="@dimen/size_40"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="@dimen/size_20">
+
+    <!-- RecyclerView for displaying call logs -->
+    <androidx.wear.widget.WearableRecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:padding="@dimen/size_4" />
+
+    <LinearLayout
+        android:id="@+id/no_call_history_text"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <!-- TextView for "No Call Logs" message -->
+        <TextView
+            android:id="@+id/empty_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/empty_call_history"
+            android:textColor="@android:color/black"
+            android:textSize="@dimen/text_size_18"
+            android:visibility="gone" />
+
+        <!-- Button for "Make a Call" action -->
+        <Button
+            android:id="@+id/make_call_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/size_8"
+            android:text="@string/make_a_call"
+            android:visibility="gone" />
+    </LinearLayout>
+</LinearLayout>
