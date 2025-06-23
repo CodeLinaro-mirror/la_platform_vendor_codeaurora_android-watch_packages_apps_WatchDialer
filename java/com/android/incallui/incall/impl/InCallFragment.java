@@ -89,6 +89,7 @@ import com.android.incallui.incall.protocol.PrimaryCallState;
 import com.android.incallui.incall.protocol.PrimaryCallState.ButtonState;
 import com.android.incallui.incall.protocol.PrimaryInfo;
 import com.android.incallui.incall.protocol.SecondaryInfo;
+import com.android.incallui.SystemFeatures;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -196,12 +197,23 @@ public class InCallFragment extends Fragment
     final View view =
         StrictModeUtils.bypass(
             () -> layoutInflater.inflate(R.layout.frag_incall_voice, viewGroup, false));
-    contactGridManager =
+    // Do not display contact avatars on Watch devices.
+    if ( SystemFeatures.getInstance().isWatchScreenRound() ) {
+      contactGridManager =
+        new ContactGridManager(
+            view,
+            (ImageView) view.findViewById(R.id.contactgrid_avatar),
+            getResources().getDimensionPixelSize(R.dimen.incall_avatar_size),
+            false);
+        contactGridManager.setAvatarHidden(true);
+    } else {
+      contactGridManager =
         new ContactGridManager(
             view,
             (ImageView) view.findViewById(R.id.contactgrid_avatar),
             getResources().getDimensionPixelSize(R.dimen.incall_avatar_size),
             true /* showAnonymousAvatar */);
+    }
     contactGridManager.onMultiWindowModeChanged(getActivity().isInMultiWindowMode());
 
     paginator = (InCallPaginator) view.findViewById(R.id.incall_paginator);

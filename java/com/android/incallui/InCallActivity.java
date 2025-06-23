@@ -218,6 +218,9 @@ public class InCallActivity extends TransactionSafeFragmentActivity
       didShowSpeakEasyScreen = bundle.getBoolean(KeysForSavedInstance.DID_SHOW_SPEAK_EASY_SCREEN);
     }
 
+    // Initialize SystemFeatures to support round watch
+    SystemFeatures.getInstance().init(getApplicationContext());
+
     setWindowFlags();
     setContentView(R.layout.incall_screen);
     internalResolveIntent(getIntent());
