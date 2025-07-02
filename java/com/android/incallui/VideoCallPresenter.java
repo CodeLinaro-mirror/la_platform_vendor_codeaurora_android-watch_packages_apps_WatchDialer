@@ -616,6 +616,9 @@ public class VideoCallPresenter
       }
     }
     if (isDualVideoCallEnabled()) {
+      if (mQtiImsExtConnector == null) {
+        maybeCreateQtiImsExtConnector(context, DUAL_VIDEO);
+      }
       Point source2VideoDimensions = getRemote2VideoSurfaceTexture().getSourceVideoDimensions();
       if (source2VideoDimensions != null && primaryCall != null) {
         int width = primaryCall.getPeer2DimensionWidth();
@@ -667,6 +670,8 @@ public class VideoCallPresenter
       maybeUnsetPauseImage();
       updateCameraSelection(primaryCall);
     }
+    // clear side-car connector if connector is not null, exitVideoMode is not always called
+    clearVideoCallProvider();
     InCallPresenter.getInstance().enableScreenTimeout(true);
 
     videoCallScreen = null;
@@ -1157,7 +1162,7 @@ public class VideoCallPresenter
   private void onPrimaryCallChanged(DialerCall newPrimaryCall) {
     final boolean shouldShowVideoUi = shouldShowVideoUiForCall(newPrimaryCall);
     final boolean isVideoMode = isVideoMode();
-    if (ScreenShareHelper.screenShareRequested()) {
+    if (ScreenShareHelper.screenShareRequested() && primaryCall != null) {
         exitScreenShare();
         clearScreenShareStates();
     }
@@ -1244,8 +1249,8 @@ public class VideoCallPresenter
     Log.i("VideoCallPresenter.onDetailsChanged", "getToken: " + call.getToken());
     if(isDualVideoCallEnabled() && mVideoCallProviderManager == null
                && call.getToken() != QtiCallConstants.INVALID_TOKEN_ID) {
-      Log.i("VideoCallPresenter.onDetailsChanged", "maybeCreateConnector");
       if (mQtiImsExtConnector == null) {
+          Log.i("VideoCallPresenter.onDetailsChanged", "maybeCreateConnector");
           maybeCreateQtiImsExtConnector(context, DUAL_VIDEO);
       } else {
         // mVideoCallProviderManager is not created, try to set the listener again
@@ -1604,8 +1609,8 @@ public class VideoCallPresenter
               "unable to disable camera2");
         }
         removeVideoCallProviderListener();
-        clearVideoCallProvider();
     }
+    clearVideoCallProvider();
 
     if (primaryCall != null &&
         videoCall != null &&
@@ -2141,7 +2146,7 @@ public class VideoCallPresenter
     @Override
     public void onSurfaceClick(VideoSurfaceTexture videoCallSurface) {
       // Show zoom control when preview surface is clicked.
-      LogUtil.i("VideoCallPresenter.onSurfaceClick", "");
+      LogUtil.i("VideoCallPresenter.onSurfaceClick", "LocalDelegate");
       if (shallTransmitStaticImage()) {
         VideoCallPresenter.this.onSurfaceClick();
       } else if (mPictureModeHelper != null && mPictureModeHelper.canShowPreviewVideoView()
@@ -2185,14 +2190,11 @@ public class VideoCallPresenter
 
     @Override
     public void onSurfaceClick(VideoSurfaceTexture videoCallSurface) {
-      boolean isCrbtReady = isIncomingVideoAvailableForEarlyMedia();
-      // Set CRBT call and visualized voice call not support full screen mode.
-      if ((QtiCallUtils.hasVideoCrbtVtCall(context) && isCrbtReady)
-          || QtiCallUtils.hasVideoCrbtVoLteCall(context)
-          || QtiCallUtils.isVisualizedVoiceCall()) {
-        LogUtil.i(
-            "VideoCallPresenter.RemoteDelegate",
-            "ignore to enter full screen mode for CRBT/UVS call.");
+      LogUtil.i("VideoCallPresenter.onSurfaceClick", "RemoteDelegate");
+      if (primaryCall != null
+          && (primaryCall.getState() == DialerCallState.DIALING
+          || primaryCall.getState() == DialerCallState.CONNECTING)) {
+        LogUtil.i("VideoCallPresenter.RemoteDelegate", "ignore to enter full screen mode.");
         return;
       }
       VideoCallPresenter.this.onSurfaceClick();
