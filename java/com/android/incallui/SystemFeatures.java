@@ -15,11 +15,10 @@ import android.content.res.Configuration;
  */
 public class SystemFeatures {
     private static SystemFeatures _instance;
-
+    private boolean mIsFeatureWatch = false;
     private boolean mIsScreenRound = false;
 
     private SystemFeatures() {
-
     }
 
     public static SystemFeatures getInstance() {
@@ -30,7 +29,15 @@ public class SystemFeatures {
     }
 
     public void init(Context context) {
+        if ( ((UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE)).
+                getCurrentModeType() == Configuration.UI_MODE_TYPE_WATCH) {
+                mIsFeatureWatch = true;
+        }
         mIsScreenRound = context.getResources().getConfiguration().isScreenRound();
+    }
+
+    public boolean isFeatureWatchEnabled() {
+        return mIsFeatureWatch;
     }
 
     public boolean isWatchScreenRound() {

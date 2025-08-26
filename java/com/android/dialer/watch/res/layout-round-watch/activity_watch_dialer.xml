@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+    SPDX-License-Identifier: BSD-3-Clause-Clear
+-->
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/mainLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/size_52"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="@dimen/size_20">
+
+        <!-- Dialpad -->
+        <LinearLayout
+            android:id="@+id/dialpadItem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/size_12"
+            android:background="@drawable/circular_background_with_ripple"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="start|center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/size_20">
+
+            <ImageView
+                android:id="@+id/dialpadIcon"
+                android:layout_width="@dimen/size_24"
+                android:layout_height="@dimen/size_24"
+                android:layout_marginEnd="@dimen/size_10"
+                android:src="@drawable/quantum_ic_dialpad_white_24"
+                android:tint="@android:color/black" />
+
+            <TextView
+                android:id="@+id/dialpadTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/dialpad"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/text_size_24" />
+        </LinearLayout>
+
+        <!-- Contacts -->
+        <LinearLayout
+            android:id="@+id/contactsItem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/size_12"
+            android:background="@drawable/circular_background_with_ripple"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="start|center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/size_20">
+
+            <ImageView
+                android:id="@+id/contactsIcon"
+                android:layout_width="@dimen/size_24"
+                android:layout_height="@dimen/size_24"
+                android:layout_marginEnd="@dimen/size_10"
+                android:src="@drawable/quantum_ic_people_vd_theme_24"
+                android:tint="@android:color/black" />
+
+            <TextView
+                android:id="@+id/contactsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/contacts"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/text_size_24" />
+        </LinearLayout>
+
+        <!-- Recents -->
+        <LinearLayout
+            android:id="@+id/recentsItem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/size_12"
+            android:background="@drawable/circular_background_with_ripple"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="start|center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/size_20">
+
+            <ImageView
+                android:id="@+id/recentsIcon"
+                android:layout_width="@dimen/size_24"
+                android:layout_height="@dimen/size_24"
+                android:layout_marginEnd="@dimen/size_10"
+                android:src="@drawable/quantum_ic_access_time_vd_theme_24"
+                android:tint="@android:color/black" />
+
+            <TextView
+                android:id="@+id/recentsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/recents"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/text_size_24" />
+        </LinearLayout>
+
+        <!-- Settings -->
+        <LinearLayout
+            android:id="@+id/settingsItem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/size_60"
+            android:background="@drawable/circular_background_with_ripple"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="start|center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/size_20">
+
+            <ImageView
+                android:id="@+id/settingsIcon"
+                android:layout_width="@dimen/size_24"
+                android:layout_height="@dimen/size_24"
+                android:layout_marginEnd="@dimen/size_10"
+                android:src="@drawable/watch_settings_icon"
+                android:tint="@android:color/black" />
+
+            <TextView
+                android:id="@+id/settingsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/text_size_24" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
