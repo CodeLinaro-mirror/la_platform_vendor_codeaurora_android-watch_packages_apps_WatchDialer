@@ -5,7 +5,12 @@
 -->
 
 <resources>
+
+    <dimen name="dialpad_digits_margin">42dp</dimen>
+    <dimen name="dialpad_digits_menu_left_padding">1dp</dimen>
+
     <!-- Padding dimensions -->
+    <dimen name="size_1">1dp</dimen>
     <dimen name="size_4">4dp</dimen>
     <dimen name="size_8">8dp</dimen>
     <dimen name="size_10">10dp</dimen>
@@ -18,6 +23,7 @@
     <dimen name="size_30">30dp</dimen>
     <dimen name="size_32">32dp</dimen>
     <dimen name="size_40">40dp</dimen>
+    <dimen name="size_48">48dp</dimen>
     <dimen name="size_52">52dp</dimen>
     <dimen name="size_56">56dp</dimen>
     <dimen name="size_60">60dp</dimen>
@@ -28,4 +34,5 @@
     <dimen name="text_size_18">18sp</dimen>
     <dimen name="text_size_20">20sp</dimen>
     <dimen name="text_size_24">24sp</dimen>
+
 </resources>
