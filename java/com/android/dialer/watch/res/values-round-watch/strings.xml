@@ -45,5 +45,9 @@
     <string name="unable_to_access_clipboard">Unable to access clipboard</string>
     <string name="contact_not_found">Contact not found</string>
     <string name="call_type_icon_content_description">Call type icon</string>
+    <string name="loading_call_logs">Loading call logs...</string>
+    <string name="no_call_logs">No call logs available</string>
+    <string name="error_task_rejected">Unable to process call logs. Please try again.</string>
+    <string name="unknown">Unknown</string>
 
 </resources>
