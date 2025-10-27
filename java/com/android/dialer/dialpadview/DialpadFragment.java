@@ -120,6 +120,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// QTI_BEGIN: 23-10-2025: Fix: Call button invisible after call disconnect
+import com.android.incallui.SystemFeatures;
+// QTI_END: 23-10-2025: Fix: Call button invisible after call disconnect
+
 /** Fragment that displays a twelve-key phone dialpad. */
 public class DialpadFragment extends Fragment
     implements View.OnClickListener,
@@ -218,6 +222,10 @@ public class DialpadFragment extends Fragment
 
   private DialerExecutor<String> initPhoneNumberFormattingTextWatcherExecutor;
   private boolean isDialpadSlideUp;
+
+  // QTI_BEGIN: 23-10-2025: Fix: Call button invisible after call disconnect
+  private boolean mIsRoundWatch;
+  // QTI_END: 23-10-2025: Fix: Call button invisible after call disconnect
 
   /**
    * Determines whether an add call operation is requested.
@@ -370,6 +378,11 @@ public class DialpadFragment extends Fragment
     super.onCreate(state);
 
     firstLaunch = state == null;
+
+    // QTI_BEGIN: 23-10-2025: Fix: Call button invisible after call disconnect
+    SystemFeatures.getInstance().init(getContext());
+    mIsRoundWatch = SystemFeatures.getInstance().isWatchScreenRound();
+    // QTI_END: 23-10-2025: Fix: Call button invisible after call disconnect
 
     prohibitedPhoneNumberRegexp =
         getResources().getString(R.string.config_prohibited_phone_number_regexp);
@@ -871,7 +884,11 @@ public class DialpadFragment extends Fragment
     LogUtil.enterBlock("DialpadFragment.onStop");
     super.onStop();
 
-    floatingActionButtonController.scaleOut();
+    // QTI_BEGIN: 23-10-2025: Fix: Call button invisible after call disconnect
+    if (!mIsRoundWatch) {
+      floatingActionButtonController.scaleOut();
+    }
+    // QTI_END: 23-10-2025: Fix: Call button invisible after call disconnect
     synchronized (toneGeneratorLock) {
       if (toneGenerator != null) {
         toneGenerator.release();
