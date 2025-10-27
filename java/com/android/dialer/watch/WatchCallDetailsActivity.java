@@ -125,9 +125,6 @@ public class WatchCallDetailsActivity extends AppCompatActivity {
                 showToast(getString(R.string.no_number_to_copy));
             }
         });
-
-        // TODO: Set up Block Number button
-        //blockNumberButton.setOnClickListener(v -> blockNumber());
     }
 
     @Override
