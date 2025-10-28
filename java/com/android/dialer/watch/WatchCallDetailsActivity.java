@@ -236,6 +236,11 @@ public class WatchCallDetailsActivity extends AppCompatActivity {
                 callTypeIcon.setColorFilter(getResources().getColor(R.color.dialer_red),
                         android.graphics.PorterDuff.Mode.SRC_IN);
                 return getString(R.string.missed_call);
+            case CallLog.Calls.REJECTED_TYPE:
+                callTypeIcon.setImageResource(R.drawable.quantum_ic_call_missed_vd_theme_24);
+                callTypeIcon.setColorFilter(getResources().getColor(R.color.dialer_red),
+                        android.graphics.PorterDuff.Mode.SRC_IN);
+                return getString(R.string.declined_call);
             default:
                 callTypeIcon.setImageResource(R.drawable.quantum_ic_call_missed_vd_theme_24);
                 return getString(R.string.unknown_call_type);
