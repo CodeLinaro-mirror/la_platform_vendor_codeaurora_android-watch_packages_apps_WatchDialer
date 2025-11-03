@@ -7,10 +7,12 @@
 <resources>
 
     <dimen name="dialpad_digits_margin">42dp</dimen>
-    <dimen name="dialpad_digits_menu_left_padding">1dp</dimen>
+    <dimen name="dialpad_digits_menu_left_padding">10dp</dimen>
+    <dimen name="incall_satellite_prompt_width">200dp</dimen>
 
     <!-- Padding dimensions -->
     <dimen name="size_1">1dp</dimen>
+    <dimen name="size_2">2dp</dimen>
     <dimen name="size_4">4dp</dimen>
     <dimen name="size_8">8dp</dimen>
     <dimen name="size_10">10dp</dimen>
@@ -22,11 +24,14 @@
     <dimen name="size_28">28dp</dimen>
     <dimen name="size_30">30dp</dimen>
     <dimen name="size_32">32dp</dimen>
+    <dimen name="size_36">36dp</dimen>
     <dimen name="size_40">40dp</dimen>
     <dimen name="size_48">48dp</dimen>
+    <dimen name="size_50">50dp</dimen>
     <dimen name="size_52">52dp</dimen>
     <dimen name="size_56">56dp</dimen>
     <dimen name="size_60">60dp</dimen>
+    <dimen name="size_74">74dp</dimen>
 
     <!-- Text size dimensions -->
     <dimen name="text_size_14">14sp</dimen>
@@ -34,5 +39,6 @@
     <dimen name="text_size_18">18sp</dimen>
     <dimen name="text_size_20">20sp</dimen>
     <dimen name="text_size_24">24sp</dimen>
+    <dimen name="text_size_28">28sp</dimen>
 
 </resources>

@@ -25,6 +25,11 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/**
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 package com.android.incallui;
 
@@ -41,6 +46,9 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialogFragment;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
+// QTI_BEGIN: 04-11-2025: Fix cropped call transfer option & align to circular UI
+import android.view.Gravity;
+// QTI_END: 04-11-2025: Fix cropped call transfer option & align to circular UI
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -57,6 +65,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+// QTI_BEGIN: 04-11-2025: Fix cropped call transfer option & align to circular UI
+import com.android.incallui.SystemFeatures;
+// QTI_END: 04-11-2025: Fix cropped call transfer option & align to circular UI
+
 /**
  * Common bottom sheet used to place extention feature options.
  * Called from AnswerFragment, InCallFragment and VideoCallFragment.
@@ -71,10 +83,14 @@ public class ExtBottomSheetFragment extends BottomSheetDialogFragment {
    */
   private final int OPTIONS_PER_ROW = 4;
   private final int PADDING_SHEET_ITEM = 48;
+  private final int PADDING_SHEET_ITEM_VERTICAL = 24;
   private final String COLOR_TEXT = "#E5E4E2";
   private final String COLOR_ITEM_BACKGROUND = "#0041C2";
   private final String COLOR_ITEM_BORDER = "#E5E4E2";
   private Context mContext;
+  // QTI_BEGIN: 04-11-2025: Fix cropped call transfer option & align to circular UI
+  private boolean mIsRoundWatch;
+  // QTI_END: 04-11-2025: Fix cropped call transfer option & align to circular UI
 
   /** Callback interface */
   public interface ExtBottomSheetActionCallback {
@@ -115,25 +131,44 @@ public class ExtBottomSheetFragment extends BottomSheetDialogFragment {
     LinearLayout layout = new LinearLayout(getContext());
     final List<String> options = getArguments().getStringArrayList(OPTIONS);
     layout.setOrientation(LinearLayout.VERTICAL);
+
     if (options != null) {
-      int count = 0;
-      int numOfOptions = options.size();
-      int numberOfRows =
-          ((numOfOptions % OPTIONS_PER_ROW) == 0)
-          ? (numOfOptions/OPTIONS_PER_ROW) : (numOfOptions/OPTIONS_PER_ROW) +1;
-      logi("onCreateView: numOfOptions = "+numOfOptions+" numberOfRows: "+numberOfRows);
-      for (int i = 0; i < numberOfRows; i++) {
-        LinearLayout ll = new LinearLayout(getContext());
-        int j = 0;
-        while ((j < OPTIONS_PER_ROW) && (count < numOfOptions)) {
-          ll.addView(newTextView(options.get(count)));
-          j++;
-          count++;
+      // QTI_BEGIN: 04-11-2025: Fix cropped call transfer option & align to circular UI
+      if (mIsRoundWatch) {
+        // Each option is displayed in its own row centered horizontally
+        // The background spans the full width of the screen.
+        for (String option : options) {
+            LinearLayout rowLayout = new LinearLayout(getContext());
+            rowLayout.setOrientation(LinearLayout.HORIZONTAL);
+            rowLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
+                                          LayoutParams.WRAP_CONTENT));
+            TextView optionView = newTextView(option);
+            rowLayout.addView(optionView);
+            layout.addView(rowLayout);
         }
-        layout.addView(ll);
-      }
+        // QTI_END: 04-11-2025: Fix cropped call transfer option & align to circular UI
+      } else {
+          int count = 0;
+          int numOfOptions = options.size();
+          int numberOfRows =
+              ((numOfOptions % OPTIONS_PER_ROW) == 0)
+              ? (numOfOptions/OPTIONS_PER_ROW) : (numOfOptions/OPTIONS_PER_ROW) +1;
+          logi("onCreateView: numOfOptions = "+numOfOptions+" numberOfRows: "+numberOfRows);
+          for (int i = 0; i < numberOfRows; i++) {
+            LinearLayout ll = new LinearLayout(getContext());
+            int j = 0;
+            while ((j < OPTIONS_PER_ROW) && (count < numOfOptions)) {
+              ll.addView(newTextView(options.get(count)));
+              j++;
+              count++;
+            }
+            layout.addView(ll);
+          }
+        }
     }
-    layout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+
+    layout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
+                                            LayoutParams.MATCH_PARENT));
     return layout;
   }
 
@@ -143,6 +178,10 @@ public class ExtBottomSheetFragment extends BottomSheetDialogFragment {
     logi("onAttach");
     FragmentUtils.checkParent(this, ExtBottomSheetActionCallback.class);
     mContext = context;
+    // QTI_BEGIN: 04-11-2025: Fix cropped call transfer option & align to circular UI
+    SystemFeatures.getInstance().init(getContext());
+    mIsRoundWatch = SystemFeatures.getInstance().isWatchScreenRound();
+    // QTI_END: 04-11-2025: Fix cropped call transfer option & align to circular UI
   }
 
   /*
@@ -152,16 +191,30 @@ public class ExtBottomSheetFragment extends BottomSheetDialogFragment {
   private TextView newTextView(@Nullable final String text) {
     TextView textView = new TextView(mContext);
     if (text != null) {
-      textView.setText(text);
+        textView.setText(text);
     }
-    int padding = PADDING_SHEET_ITEM;
-    textView.setPadding(padding, padding, padding, padding);
+
     textView.setBackground(textViewBorder());
     textView.setTextColor(Color.parseColor(COLOR_TEXT));
 
-    LayoutParams params =
-        new LinearLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT,1f);
-    textView.setLayoutParams(params);
+    // QTI_BEGIN: 04-11-2025: Fix cropped call transfer option & align to circular UI
+    if (mIsRoundWatch) {
+        textView.setPadding(PADDING_SHEET_ITEM, PADDING_SHEET_ITEM_VERTICAL,
+                            PADDING_SHEET_ITEM, PADDING_SHEET_ITEM_VERTICAL);
+        // TextView spans the full width of the screen.
+        // The text is centered within the TextView, and the background spans the full width.
+        LinearLayout.LayoutParams params =
+            new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        textView.setLayoutParams(params);
+        textView.setGravity(Gravity.CENTER);
+    } else {
+        int padding = PADDING_SHEET_ITEM;
+        textView.setPadding(padding, padding, padding, padding);
+        LayoutParams params =
+            new LinearLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT,1f);
+        textView.setLayoutParams(params);
+    }
+    // QTI_END: 04-11-2025: Fix cropped call transfer option & align to circular UI
 
     textView.setOnClickListener(
         new OnClickListener() {

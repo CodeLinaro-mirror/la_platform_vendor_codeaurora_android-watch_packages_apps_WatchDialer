@@ -17,13 +17,19 @@
      Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
      SPDX-License-Identifier: BSD-3-Clause-Clear
 -->
+
+<!--
+     Reduced layout_marginTop to 12dp to fix the overlapping issue in the in-call dialpad UI.
+     Since both the dialer and in-call screens share the same dialpad view,
+     adjusted the top margin to maintain consistent alignment across both interfaces.
+-->
 <com.android.dialer.dialpadview.DialpadView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/dialpad_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="bottom"
-    android:layout_marginTop="@dimen/size_48"
+    android:layout_marginTop="@dimen/size_12"
     android:background="?attr/dialpad_background"
     android:clickable="true"
     android:elevation="?attr/dialpad_elevation"
