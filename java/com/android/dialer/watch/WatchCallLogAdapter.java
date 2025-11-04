@@ -148,7 +148,9 @@ public class WatchCallLogAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             nameView.setText(displayName);
 
             itemView.setOnClickListener(v -> {
-                listener.onItemClick(item);
+                if (listener != null) {
+                    listener.onItemClick(item);
+                }
             });
         }
 
@@ -173,6 +175,7 @@ public class WatchCallLogAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     iconResId = R.drawable.quantum_ic_call_made_vd_theme_24;
                     break;
                 case CallLog.Calls.MISSED_TYPE:
+                case CallLog.Calls.REJECTED_TYPE:
                     colorResId = R.color.dialer_red;
                     iconResId = R.drawable.quantum_ic_call_missed_vd_theme_24;
                     break;

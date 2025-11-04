@@ -38,6 +38,7 @@
     <string name="incoming_call">Incoming Call</string>
     <string name="outgoing_call">Outgoing Call</string>
     <string name="missed_call">Missed Call</string>
+    <string name="declined_call">Declined Call</string>
     <string name="unknown_call_type">Unknown Call Type</string>
     <string name="call_permission_not_granted">Call permission not granted</string>
     <string name="phone_number_label">Phone Number</string>
