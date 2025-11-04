@@ -8,10 +8,12 @@ package com.android.dialer.watch;
 import android.app.Activity;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
+import android.provider.CallLog.Calls;
 import android.util.Log;
 import android.view.View;
 
 import com.android.dialer.R;
+import com.android.dialer.common.concurrent.DialerExecutorComponent;
 import com.android.dialer.dialpadview.DialpadFragment;
 import com.android.dialer.dialpadview.DialpadFragment.DialpadListener;
 import com.android.dialer.dialpadview.DialpadFragment.LastOutgoingCallCallback;
@@ -83,8 +85,22 @@ public class WatchDialpadActivity extends Activity
         return false;
     }
 
+    /**
+     * Retrieves the last outgoing call and passes it to the provided callback.
+     *
+     * This method is adapted from the implementation in DialtactsActivity.java
+     *
+     * @param callback Callback to receive the last outgoing call number.
+     */
     @Override
     public void getLastOutgoingCall(LastOutgoingCallCallback callback) {
+        DialerExecutorComponent.get(this)
+        .dialerExecutorFactory()
+        .createUiTaskBuilder(
+            getFragmentManager(), "Query last phone number", Calls::getLastOutgoingCall)
+        .onSuccess(output -> callback.lastOutgoingCall(output))
+        .build()
+        .executeParallel(this);
     }
 
     @Override
