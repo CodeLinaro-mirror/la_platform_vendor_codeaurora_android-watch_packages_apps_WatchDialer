@@ -13,7 +13,7 @@ public class WatchCallLogItem {
 
     private static final String TAG = WatchCallLogItem.class.getSimpleName();
 
-    private final String name;
+    private String name;
     private final String number;
     private final int type;
     private final long date;
@@ -29,6 +29,10 @@ public class WatchCallLogItem {
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getNumber() {

@@ -7,6 +7,7 @@ package com.android.dialer.watch;
 
 import android.content.Context;
 import android.provider.CallLog;
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,6 +35,7 @@ public class WatchCallLogAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     private final List<Object> items;
     private final OnItemClickListener onItemClickListener;
+    private final String mEmergencyNumberLabel;
 
     /**
      * Listener interface for handling item click events.
@@ -48,9 +50,11 @@ public class WatchCallLogAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
      * @param items List containing headers (String) and call log items.
      * @param onItemClickListener Callback for item click events.
      */
-    public WatchCallLogAdapter(List<Object> items, OnItemClickListener onItemClickListener) {
+    public WatchCallLogAdapter(List<Object> items, OnItemClickListener onItemClickListener,
+                              Context context) {
         this.items = items;
         this.onItemClickListener = onItemClickListener;
+        this.mEmergencyNumberLabel = context.getString(R.string.emergency_number);
         Log.d(TAG, "Adapter initialized with " + items.size() + " items.");
     }
 
@@ -78,8 +82,18 @@ public class WatchCallLogAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         if (holder instanceof HeaderViewHolder) {
             ((HeaderViewHolder) holder).bind((String) items.get(position));
         } else if (holder instanceof CallLogViewHolder) {
-            ((CallLogViewHolder) holder).bind((WatchCallLogItem) items.get(position),
-                    onItemClickListener);
+            WatchCallLogItem item = (WatchCallLogItem) items.get(position);
+
+            // Check if the number is an emergency number and update the name in the item
+            // The emergency check must occur before checking contact names,
+            // Safety regulations require emergency numbers to always display
+            // as "Emergency Number" regardless of contact information.
+            // Checking contact names first could mislabel emergency
+            // numbers (e.g., "911" appearing as "Saved contact name"), which is unsafe.
+            if (isEmergencyCall(item.getNumber())) {
+                item.setName(mEmergencyNumberLabel);
+            }
+            ((CallLogViewHolder) holder).bind(item, onItemClickListener);
         }
     }
 
@@ -124,6 +138,7 @@ public class WatchCallLogAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
         /**
          * Binds a WatchCallLogItem to the view, setting name/number and call type icon.
+         * This method handles emergency calls properly.
          *
          * @param item     The call log item.
          * @param listener The click listener for the item.
@@ -189,5 +204,27 @@ public class WatchCallLogAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     android.graphics.PorterDuff.Mode.SRC_IN);
             return iconResId;
         }
+    }
+
+    /**
+     * Utility method to check if a call represents an emergency call.
+     * Can be called from other classes like WatchCallDetailsActivity.
+     *
+     * @param context Context for resource access
+     * @param number The number from the call log
+     * @return true if this is an emergency call
+     */
+    public static boolean isEmergencyCall(String number) {
+        // Check if the number is an emergency number
+        if (number != null && !number.isEmpty()) {
+            try {
+                return PhoneNumberUtils.isEmergencyNumber(number);
+            } catch (Exception e) {
+                Log.e(TAG, "Unexpected error checking emergency number", e);
+                return false;
+            }
+        }
+
+        return false;
     }
 }

@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,6 +51,7 @@ public class WatchCallDetailsActivity extends AppCompatActivity {
     private TextView mNameView;
     private TextView mNumberView;
     private ImageButton mAddViewContactIcon;
+    private ImageButton mMessageButton;
 
 
     @Override
@@ -65,59 +67,54 @@ public class WatchCallDetailsActivity extends AppCompatActivity {
         long duration = intent.getLongExtra(INTENT_EXTRA_DURATION, 0);
         int callType = intent.getIntExtra(INTENT_EXTRA_TYPE, -1);
 
-        // The contact details will be refreshed in onResume()
-
         // Set up the header (e.g., name, number, date, time, and duration)
         mNameView = findViewById(R.id.call_details_name);
         mNumberView = findViewById(R.id.call_details_number);
         mAddViewContactIcon = findViewById(R.id.add_view_contact_icon);
+        mMessageButton = findViewById(R.id.message_button);
         TextView typeView = findViewById(R.id.call_details_type);
         TextView dateView = findViewById(R.id.call_details_date);
         TextView durationView = findViewById(R.id.call_details_duration);
         ImageButton callButton = findViewById(R.id.call_button);
-        ImageButton messageButton = findViewById(R.id.message_button);
         ImageButton copyNumberIcon = findViewById(R.id.copy_number_icon);
 
-        // Handle name visibility
-        if (mName != null && !mName.isEmpty()) {
-            mNameView.setText(mName);
-            mNameView.setVisibility(View.VISIBLE);
+        // Common UI setup - applies to both emergency and normal calls
+        setupCommonUiElements(typeView, dateView, durationView, date, duration, callType);
+        setupCommonButtonListeners(callButton, copyNumberIcon);
 
-            // Set up "View Contact" button
-            mAddViewContactIcon.setImageResource(R.drawable.quantum_ic_people_vd_theme_24);
-            mAddViewContactIcon.setOnClickListener(v -> viewContact());
+        // Check if this is an emergency call
+        boolean isEmergency = isEmergencyCall();
+
+        if (isEmergency) {
+            handleEmergencyCallUI();
         } else {
-            mNameView.setVisibility(View.GONE);
-
-            // Set up "Add to Contacts" button
-            mAddViewContactIcon.setImageResource(R.drawable.quantum_ic_person_add_white_24);
-            mAddViewContactIcon.setOnClickListener(v -> addToContacts());
+            handleNormalCallUi();
         }
+    }
 
-        // Handle number, call type, date, and duration
-        if (mNumber == null || mNumber.isEmpty()) {
-            showToast(getString(R.string.phone_number_not_available));
-            Log.e(TAG, "onCreate: Phone number is not available");
-            finish();
-            return;
-        }
-        mNumberView.setText(mNumber);
+    /**
+     * Sets up UI elements that are common to both emergency and normal calls
+     */
+    private void setupCommonUiElements(TextView typeView, TextView dateView,
+                                    TextView durationView, long date,
+                                    long duration, int callType) {
         typeView.setText(getCallTypeString(callType));
         dateView.setText(date != 0 ? formatDate(date) : getString(R.string.unknown_date));
 
-        if (duration > 0) {
+        if (duration >= 0) {
             durationView.setText(formatDuration(duration));
         } else {
             durationView.setVisibility(TextView.GONE);
         }
+    }
 
-        // Set up Call button
+    /**
+     * Sets up button listeners that are common to both emergency and normal calls
+     */
+    private void setupCommonButtonListeners(ImageButton callButton,
+                                        ImageButton copyNumberIcon) {
         callButton.setOnClickListener(v -> makeCall());
 
-        // Set up Message button
-        messageButton.setOnClickListener(v -> sendMessage());
-
-        // Set up Copy Number button
         copyNumberIcon.setOnClickListener(v -> {
             if (mNumber != null && !mNumber.isEmpty()) {
                 copyNumberToClipboard();
@@ -127,10 +124,76 @@ public class WatchCallDetailsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Handles UI specific to emergency calls
+     */
+    private void handleEmergencyCallUI() {
+        // Handle emergency call display - SHOW ONLY "Emergency" TEXT, HIDE NUMBER
+        mNameView.setText(getString(R.string.emergency_number));
+        mNameView.setVisibility(View.VISIBLE);
+        mNumberView.setVisibility(View.GONE);
+
+        // Hide buttons not applicable for emergency calls
+        mMessageButton.setVisibility(View.GONE);
+        mAddViewContactIcon.setVisibility(View.INVISIBLE);
+    }
+
+    /**
+     * Handles UI specific to normal calls
+     */
+    private void handleNormalCallUi() {
+        updateCallDetailsInfoUI(false);
+
+        // Set up Message button specific to normal calls
+        mMessageButton.setVisibility(View.VISIBLE);
+        mMessageButton.setOnClickListener(v -> sendMessage());
+    }
+
+    /**
+     * Updates contact information UI elements with appropriate styling
+     */
+    private void updateCallDetailsInfoUI(boolean applyBoldStyling) {
+        // Handle name visibility
+        if (mName != null && !mName.isEmpty()) {
+            mNameView.setText(mName);
+            mNameView.setVisibility(View.VISIBLE);
+
+            // Apply bold styling if requested
+            if (applyBoldStyling) {
+                mNameView.setTypeface(null, android.graphics.Typeface.BOLD);
+            }
+
+            // Update "View Contact" button
+            mAddViewContactIcon.setImageResource(R.drawable.quantum_ic_people_vd_theme_24);
+            mAddViewContactIcon.setOnClickListener(v -> viewContact());
+            mAddViewContactIcon.setVisibility(View.VISIBLE);
+        } else {
+            mNameView.setVisibility(View.GONE);
+
+            // Update "Add to Contacts" button
+            mAddViewContactIcon.setImageResource(R.drawable.quantum_ic_person_add_white_24);
+            mAddViewContactIcon.setOnClickListener(v -> addToContacts());
+            mAddViewContactIcon.setVisibility(View.VISIBLE);
+        }
+
+        // Handle number visibility
+        if (mNumber != null && !mNumber.isEmpty()) {
+            mNumberView.setText(mNumber);
+            mNumberView.setVisibility(View.VISIBLE);
+
+            // Apply bold styling if requested and there's no name
+            if (applyBoldStyling) {
+                mNumberView.setTypeface(null, mName == null || mName.isEmpty() ?
+                        android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+            }
+        } else {
+            mNumberView.setVisibility(View.GONE);
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume: Refreshing contact details");
         refreshContactDetails();
     }
 
@@ -187,28 +250,20 @@ public class WatchCallDetailsActivity extends AppCompatActivity {
     }
 
     private void updateUI() {
+        boolean isEmergency = isEmergencyCall();
 
-        // Handle name visibility
-        if (mName != null && !mName.isEmpty()) {
-            mNameView.setText(mName);
-            mNameView.setVisibility(View.VISIBLE);
-            mNameView.setTypeface(null, android.graphics.Typeface.BOLD);
-            // Update "View Contact" button
-            mAddViewContactIcon.setImageResource(R.drawable.quantum_ic_people_vd_theme_24);
-            mAddViewContactIcon.setOnClickListener(v -> viewContact());
+        if (isEmergency) {
+            handleEmergencyCallUI();
         } else {
-            mNameView.setVisibility(View.GONE);
-            // Update "Add to Contacts" button
-            mAddViewContactIcon.setImageResource(R.drawable.quantum_ic_person_add_white_24);
-            mAddViewContactIcon.setOnClickListener(v -> addToContacts());
+            updateCallDetailsInfoUI(true);
         }
+    }
 
-        // Update the number only once
-        if (mNumber != null && !mNumber.isEmpty()) {
-            mNumberView.setText(mNumber);
-            mNumberView.setTypeface(null, mName == null || mName.isEmpty() ?
-                    android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
-        }
+    /**
+     * Check if this call represents an emergency call.
+     */
+    private boolean isEmergencyCall() {
+        return WatchCallLogAdapter.isEmergencyCall(mNumber);
     }
 
     /**

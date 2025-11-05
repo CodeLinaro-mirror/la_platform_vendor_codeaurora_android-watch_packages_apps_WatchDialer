@@ -103,7 +103,7 @@ public class WatchRecentsActivity extends AppCompatActivity {
         // Set the initial state to LOADING
         setResult(CallLogResult.LOADING);
 
-        mAdapter = new WatchCallLogAdapter(mGroupedCallLogItems, this::onCallLogItemClick);
+        mAdapter = new WatchCallLogAdapter(mGroupedCallLogItems, this::onCallLogItemClick, this);
         mRecyclerView.setAdapter(mAdapter);
 
         fetchCallLogs();
