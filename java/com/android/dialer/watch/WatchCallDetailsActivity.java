@@ -17,6 +17,7 @@ import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.PhoneNumberUtils;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,8 +28,6 @@ import android.widget.Toast;
 
 import com.android.dialer.R;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Locale;
 
 /**
@@ -409,13 +408,17 @@ public class WatchCallDetailsActivity extends AppCompatActivity {
      * @return A formatted date string.
      */
     private String formatDate(long date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy hh:mm a",
-                Locale.getDefault());
-        return sdf.format(new Date(date));
+        return DateUtils.formatDateTime(
+            this,
+            date,
+            DateUtils.FORMAT_SHOW_TIME
+            | DateUtils.FORMAT_SHOW_DATE
+            | DateUtils.FORMAT_SHOW_YEAR
+        );
     }
 
     /**
-     * Formats the duration into a readable string.
+     * Formats the duration into a readable string
      *
      * @param elapsedSeconds The duration in seconds.
      * @return A formatted duration string.
@@ -429,8 +432,14 @@ public class WatchCallDetailsActivity extends AppCompatActivity {
             minutes = 99;
         }
 
-        // Format the duration as "MM:SS"
-        return String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
+        // Format like CallLogDurations - "9m 55s" or "55s"
+        if (elapsedSeconds >= 60) {
+            // For durations >= 60 seconds, show minutes and seconds
+            return String.format(Locale.getDefault(), "%dm %02ds", minutes, seconds);
+        } else {
+            // For durations < 60 seconds, show only seconds
+            return String.format(Locale.getDefault(), "%ds", seconds);
+        }
     }
 
     /**
