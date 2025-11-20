@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+    SPDX-License-Identifier: BSD-3-Clause-Clear
+-->
+
+<resources>
+  <dimen name="answer_call_contact_name_text_size">18sp</dimen>
+  <dimen name="two_button_method_bottom_margin">32dp</dimen>
+</resources>
