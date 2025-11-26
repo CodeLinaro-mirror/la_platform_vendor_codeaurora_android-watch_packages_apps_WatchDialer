@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+/**
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
 
 package com.android.incallui.answer.impl.answermethod;
 
@@ -23,6 +28,9 @@ import android.support.annotation.VisibleForTesting;
 import android.support.v4.app.Fragment;
 import com.android.dialer.common.LogUtil;
 import com.android.incallui.util.AccessibilityUtil;
+// QTI_BEGIN: Fix – Call Answering in In-Call UI
+import com.android.incallui.SystemFeatures;
+// QTI_END: Fix – Call Answering in In-Call UI
 
 /** Creates the appropriate {@link AnswerMethod} for the circumstances. */
 public class AnswerMethodFactory {
@@ -57,6 +65,13 @@ public class AnswerMethodFactory {
       LogUtil.i("AnswerMethodFactory.needTwoButton", "enabled for testing");
       return true;
     }
+
+    // QTI_BEGIN: Fix – Call Answering in In-Call UI
+    if (SystemFeatures.getInstance().isWatchScreenRound()) {
+      LogUtil.i("AnswerMethodFactory.needTwoButton", "enabled for round screen");
+      return true;
+    }
+    // QTI_END: Fix – Call Answering in In-Call UI
 
     return AccessibilityUtil.isTouchExplorationEnabled(activity) || activity.isInMultiWindowMode();
   }
