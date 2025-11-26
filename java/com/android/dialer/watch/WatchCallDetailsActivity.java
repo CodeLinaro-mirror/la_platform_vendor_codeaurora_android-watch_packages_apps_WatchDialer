@@ -26,6 +26,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.dialer.callintent.CallIntentBuilder;
+import com.android.dialer.callintent.CallInitiationType;
+import com.android.dialer.precall.PreCall;
 import com.android.dialer.R;
 
 import java.util.Locale;
@@ -307,9 +310,9 @@ public class WatchCallDetailsActivity extends AppCompatActivity {
     private void makeCall() {
         if (checkSelfPermission(
                 android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
-            Intent callIntent = new Intent(Intent.ACTION_CALL);
-            callIntent.setData(Uri.parse("tel:" + mNumber));
-            startActivity(callIntent);
+            CallIntentBuilder callIntentBuilder =
+                new CallIntentBuilder(mNumber, CallInitiationType.Type.CALL_DETAILS);
+            PreCall.start(this, callIntentBuilder);
         } else {
             // Request the permission
             requestPermissions(new String[]{android.Manifest.permission.CALL_PHONE},
