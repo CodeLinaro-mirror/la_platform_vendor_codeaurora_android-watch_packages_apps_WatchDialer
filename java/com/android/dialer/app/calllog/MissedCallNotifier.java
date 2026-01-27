@@ -81,6 +81,11 @@ public class MissedCallNotifier implements Worker<Pair<Integer, String>, Void> {
 
   private final Context context;
   private final CallLogNotificationsQueryHelper callLogNotificationsQueryHelper;
+  /**
+   * Maximum number of individual missed call notifications to show.
+   * Beyond this limit, only show the group summary notification.
+   */
+  private static final int MAX_INDIVIDUAL_NOTIFICATIONS = 20;
 
   @VisibleForTesting
   MissedCallNotifier(
@@ -239,6 +244,15 @@ public class MissedCallNotifier implements Worker<Pair<Integer, String>, Void> {
         notification);
 
     if (useCallList) {
+      // Limit the number of individual notifications to prevent ANR
+      int callsToProcess = Math.min(newCalls.size(), MAX_INDIVIDUAL_NOTIFICATIONS);
+      LogUtil.i(
+          "MissedCallNotifier.updateMissedCallNotification",
+          "processing individual call notifications for %d calls (total: %d, limit: %d)",
+          callsToProcess,
+          newCalls.size(),
+          MAX_INDIVIDUAL_NOTIFICATIONS);
+
       // Do not repost active notifications to prevent erasing post call notes.
       Set<String> activeAndThrottledTags = new ArraySet<>();
       for (StatusBarNotification activeNotification :
@@ -251,7 +265,9 @@ public class MissedCallNotifier implements Worker<Pair<Integer, String>, Void> {
         activeAndThrottledTags.add(throttledNotification.getTag());
       }
 
-      for (NewCall call : newCalls) {
+      // Only process the most recent calls up to the limit
+      for (int i = 0; i < callsToProcess; i++) {
+        NewCall call = newCalls.get(i);
         String callTag = getNotificationTagForCall(call);
         if (!activeAndThrottledTags.contains(callTag)) {
           DialerNotificationManager.notify(
