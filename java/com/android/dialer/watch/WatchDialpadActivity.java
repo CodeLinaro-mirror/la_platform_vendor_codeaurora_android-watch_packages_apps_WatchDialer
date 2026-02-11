@@ -100,5 +100,8 @@ public class WatchDialpadActivity extends Activity
 
     @Override
     public void onCallPlacedFromDialpad() {
+        if (mDialpadFragment != null) {
+            mDialpadFragment.clearDialpad();
+        }
     }
 }
