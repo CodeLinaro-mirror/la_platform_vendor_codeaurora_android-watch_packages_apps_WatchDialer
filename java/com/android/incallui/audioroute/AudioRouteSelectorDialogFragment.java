@@ -136,13 +136,14 @@ public class AudioRouteSelectorDialogFragment extends BottomSheetDialogFragment 
             (audioState.getRoute() == CallAudioState.ROUTE_BLUETOOTH)
                 && (bluetoothDeviceSet.size() == 1
                     || device.equals(audioState.getActiveBluetoothDevice()));
-        TextView textView = createBluetoothItem(device, selected);
+        TextView textView = createBluetoothItem((ViewGroup) view, device, selected);
         ((LinearLayout) view).addView(textView, 0);
       }
     } else {
       // Only create Bluetooth audio route
       TextView textView =
-          (TextView) getLayoutInflater().inflate(R.layout.audioroute_item, null, false);
+          (TextView)
+              getLayoutInflater().inflate(R.layout.audioroute_item, (ViewGroup) view, false);
       textView.setText(getString(R.string.audioroute_bluetooth));
       initItem(
           textView,
@@ -204,10 +205,11 @@ public class AudioRouteSelectorDialogFragment extends BottomSheetDialogFragment 
         });
   }
 
-  private TextView createBluetoothItem(BluetoothDevice bluetoothDevice, boolean selected) {
+  private TextView createBluetoothItem(
+      ViewGroup parent, BluetoothDevice bluetoothDevice, boolean selected) {
     int selectedColor = ThemeComponent.get(getContext()).theme().getColorPrimary();
     TextView textView =
-        (TextView) getLayoutInflater().inflate(R.layout.audioroute_item, null, false);
+        (TextView) getLayoutInflater().inflate(R.layout.audioroute_item, parent, false);
 
     if (getContext().checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
             == PackageManager.PERMISSION_GRANTED) {
